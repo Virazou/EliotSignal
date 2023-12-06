@@ -41,9 +41,8 @@ sample_rate = 44100
 
 
 
-
-# # Lecture du fichier audio
-sample_rate, audio_data = wavfile.read('enregistrement_0.wav')
+# Lecture du fichier audio
+sample_rate, audio_data = wavfile.read('enregistrement_24.wav')
 
 # Calcul de la FFT
 fft_result = np.fft.fft(audio_data)
@@ -64,26 +63,30 @@ plt.ylabel('Magnitude')
 plt.grid()
 
 # Définir les fréquences de coupure du passe-bande
-low_cutoff = 150  # fréquence de coupure inférieure
-high_cutoff = 2000  # fréquence de coupure supérieure
+low_cutoff = 450  # fréquence de coupure inférieure
+high_cutoff = 2500 # fréquence de coupure supérieure
 
 # Création d'un filtre passe-bande
-fft_result_bandpass = np.where((positive_frequencies >= low_cutoff) & (positive_frequencies <= high_cutoff), fft_result[:len(positive_frequencies)], 0)
+filter_indices = np.where((positive_frequencies >= low_cutoff) & (positive_frequencies <= high_cutoff))
+fft_result_bandpass = np.zeros_like(fft_result)
+fft_result_bandpass[filter_indices] = fft_result[filter_indices]
 
 # Reconstruction du signal filtré en utilisant l'inverse de la FFT
 audio_data_bandpass = np.fft.ifft(fft_result_bandpass).real
 
-# Tracé du spectre en fréquence après le filtrage passe-bande
-magnitude_bandpass = np.abs(fft_result_bandpass)
-plt.plot(positive_frequencies, magnitude_bandpass, label='Spectre après filtrage passe-bande', color='red')
+# Augmentation du volume du signal filtré (amplification)
+#amplification_factor = 1.3  # Facteur d'amplification
+#audio_data_amplified = audio_data_bandpass * amplification_factor
 
-# Ajouter une légende
-plt.legend()
+
+# Création d'un fichier audio à partir du signal filtré
+scaled = np.int16(audio_data_bandpass / np.max(np.abs(audio_data_bandpass)) * 32767)
+wavfile.write('audio_filtre_24_V450_2500.wav', sample_rate, scaled)
+
 
 # Afficher le plot
+plt.plot(positive_frequencies, np.abs(fft_result_bandpass)[:len(positive_frequencies)], label='Spectre après filtrage passe-bande', color='red')
+plt.legend()
 plt.show()
-
-
-
 
 
